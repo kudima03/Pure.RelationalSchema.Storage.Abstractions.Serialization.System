@@ -2,8 +2,8 @@ version: 2
 updates:
 - package-ecosystem: nuget
   directories:
-    - "src/"
-    - "src/Tests/"
+    - "src/Pure.RelationalSchema.Storage.Abstractions.Serialization.System"
+    - "src/Tests/Pure.RelationalSchema.Storage.Abstractions.Serialization.System.Test"
   schedule:
     interval: daily
 - package-ecosystem: "github-actions"
