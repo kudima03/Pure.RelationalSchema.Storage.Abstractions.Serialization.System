@@ -8,4 +8,12 @@
     <EnablePackageValidation>true</EnablePackageValidation>
     <!--<PackageValidationBaselineVersion>0.1.0-preview.0.1.0</PackageValidationBaselineVersion>-->
   </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>Pure.RelationalSchema.Storage.Abstractions.Serialization.System</PackageId>
+    <RootNamespace>Pure.RelationalSchema.Storage.Abstractions.Serialization.System</RootNamespace>
+    <AssemblyName>Pure.RelationalSchema.Storage.Abstractions.Serialization.System</AssemblyName>
+    <Authors>Dmitry Kurochkin</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kudima03/Pure.RelationalSchema.Storage.Abstractions.Serialization.System</PackageProjectUrl>
+  </PropertyGroup>
 </Project>
