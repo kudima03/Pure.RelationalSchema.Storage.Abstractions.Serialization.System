@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -16,4 +16,12 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/kudima03/Pure.RelationalSchema.Storage.Abstractions.Serialization.System</PackageProjectUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Pure.RelationalSchema.Storage" Version="0.1.0-preview.7.0.0" />
+    <PackageReference
+      Include="Pure.RelationalSchema.Storage.HashCodes"
+      Version="0.1.0-preview.2.1.0"
+    />
+    <PackageReference Include="Pure.Collections.Generic" Version="0.1.0-preview.3.0.0" />
+  </ItemGroup>
 </Project>
