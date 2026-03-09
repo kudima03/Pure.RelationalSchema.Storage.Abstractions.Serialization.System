@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Pure.Collections.Generic;
@@ -5,6 +6,32 @@ using Pure.RelationalSchema.Abstractions.Column;
 using Pure.RelationalSchema.HashCodes;
 
 namespace Pure.RelationalSchema.Storage.Abstractions.Serialization.System;
+
+internal sealed record CellsJsonModel : IEnumerable<KeyValuePair<string, string>>
+{
+    private readonly IEnumerable<KeyValuePair<string, string>> _cells;
+
+    public CellsJsonModel(IEnumerable<ICell> cells) : this(cells.Select(x=> new Key))
+    {
+
+    }
+
+    [JsonConstructor]
+    public CellsJsonModel(IEnumerable<KeyValuePair<string, string>> cells)
+    {
+        _cells = cells;
+    }
+
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+    {
+        return _cells.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+}
 
 public sealed class RowConverter : JsonConverter<IRow>
 {
@@ -34,6 +61,6 @@ public sealed class RowConverter : JsonConverter<IRow>
         JsonSerializerOptions options
     )
     {
-        JsonSerializer.Serialize(writer, value.Cells.AsEnumerable(), options);
+        JsonSerializer.Serialize(writer, value.Cells.Select(x=> new KeyValuePair<string, string>(x.Key.)).AsEnumerable(), options);
     }
 }
