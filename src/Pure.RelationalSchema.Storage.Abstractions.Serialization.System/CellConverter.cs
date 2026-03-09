@@ -1,7 +1,22 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using String = Pure.Primitives.String.String;
 
 namespace Pure.RelationalSchema.Storage.Abstractions.Serialization.System;
+
+internal sealed record CellJsonModel
+{
+    public CellJsonModel(ICell cell)
+        : this(cell.Value.TextValue) { }
+
+    [JsonConstructor]
+    public CellJsonModel(string value)
+    {
+        Value = value;
+    }
+
+    public string Value { get; }
+}
 
 public sealed class CellConverter : JsonConverter<ICell>
 {
@@ -11,7 +26,11 @@ public sealed class CellConverter : JsonConverter<ICell>
         JsonSerializerOptions options
     )
     {
-        return JsonSerializer.Deserialize<Cell>(ref reader, options)!;
+        CellJsonModel model = JsonSerializer.Deserialize<CellJsonModel>(
+            ref reader,
+            options
+        )!;
+        return new Cell(new String(model.Value));
     }
 
     public override void Write(
@@ -20,6 +39,6 @@ public sealed class CellConverter : JsonConverter<ICell>
         JsonSerializerOptions options
     )
     {
-        JsonSerializer.Serialize(writer, value, options);
+        JsonSerializer.Serialize(writer, new CellJsonModel(value), options);
     }
 }
