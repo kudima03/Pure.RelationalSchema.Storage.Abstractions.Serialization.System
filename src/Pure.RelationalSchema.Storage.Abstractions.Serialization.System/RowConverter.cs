@@ -6,6 +6,23 @@ using Pure.RelationalSchema.HashCodes;
 
 namespace Pure.RelationalSchema.Storage.Abstractions.Serialization.System;
 
+internal sealed record ColumnAndCellJsonModel
+{
+    public ColumnAndCellJsonModel(KeyValuePair<IColumn, ICell> pair)
+        : this(pair.Key, pair.Value) { }
+
+    [JsonConstructor]
+    public ColumnAndCellJsonModel(IColumn column, ICell cell)
+    {
+        Column = column;
+        Cell = cell;
+    }
+
+    public IColumn Column { get; }
+
+    public ICell Cell { get; }
+}
+
 public sealed class RowConverter : JsonConverter<IRow>
 {
     public override IRow Read(
@@ -14,15 +31,15 @@ public sealed class RowConverter : JsonConverter<IRow>
         JsonSerializerOptions options
     )
     {
-        IEnumerable<KeyValuePair<IColumn, ICell>> pairs = JsonSerializer.Deserialize<
-            IEnumerable<KeyValuePair<IColumn, ICell>>
+        IEnumerable<ColumnAndCellJsonModel> models = JsonSerializer.Deserialize<
+            IEnumerable<ColumnAndCellJsonModel>
         >(ref reader, options)!;
 
         return new Row(
-            new Dictionary<KeyValuePair<IColumn, ICell>, IColumn, ICell>(
-                pairs,
-                x => x.Key,
-                x => x.Value,
+            new Dictionary<ColumnAndCellJsonModel, IColumn, ICell>(
+                models,
+                x => x.Column,
+                x => x.Cell,
                 x => new ColumnHash(x)
             )
         );
@@ -34,6 +51,10 @@ public sealed class RowConverter : JsonConverter<IRow>
         JsonSerializerOptions options
     )
     {
-        JsonSerializer.Serialize(writer, value.Cells.AsEnumerable(), options);
+        JsonSerializer.Serialize(
+            writer,
+            value.Cells.Select(x => new ColumnAndCellJsonModel(x)),
+            options
+        );
     }
 }

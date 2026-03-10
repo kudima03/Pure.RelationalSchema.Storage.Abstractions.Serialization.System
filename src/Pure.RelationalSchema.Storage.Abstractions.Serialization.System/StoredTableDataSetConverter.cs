@@ -6,16 +6,12 @@ using Pure.RelationalSchema.Abstractions.Table;
 
 namespace Pure.RelationalSchema.Storage.Abstractions.Serialization.System;
 
-internal sealed record StoredTableDataSetJsonModel : IStoredTableDataSet
+internal sealed record StoredTableDataSetFromJsonModel : IStoredTableDataSet
 {
-    public StoredTableDataSetJsonModel(IStoredTableDataSet dataset)
-        : this(dataset.TableSchema, dataset) { }
+    public StoredTableDataSetFromJsonModel(StoredTableDataSetJsonModel model)
+        : this(model.TableSchema, model.Rows.AsQueryable()) { }
 
-    [JsonConstructor]
-    public StoredTableDataSetJsonModel(ITable tableSchema, IEnumerable<IRow> rows)
-        : this(tableSchema, rows.AsQueryable()) { }
-
-    public StoredTableDataSetJsonModel(ITable tableSchema, IQueryable<IRow> rows)
+    public StoredTableDataSetFromJsonModel(ITable tableSchema, IQueryable<IRow> rows)
     {
         TableSchema = tableSchema;
         Rows = rows;
@@ -55,6 +51,23 @@ internal sealed record StoredTableDataSetJsonModel : IStoredTableDataSet
     }
 }
 
+internal sealed record StoredTableDataSetJsonModel
+{
+    public StoredTableDataSetJsonModel(IStoredTableDataSet dataset)
+        : this(dataset.TableSchema, dataset) { }
+
+    [JsonConstructor]
+    public StoredTableDataSetJsonModel(ITable tableSchema, IEnumerable<IRow> rows)
+    {
+        TableSchema = tableSchema;
+        Rows = rows;
+    }
+
+    public ITable TableSchema { get; }
+
+    public IEnumerable<IRow> Rows { get; }
+}
+
 public sealed class StoredTableDataSetConverter : JsonConverter<IStoredTableDataSet>
 {
     public override IStoredTableDataSet Read(
@@ -63,10 +76,9 @@ public sealed class StoredTableDataSetConverter : JsonConverter<IStoredTableData
         JsonSerializerOptions options
     )
     {
-        return JsonSerializer.Deserialize<StoredTableDataSetJsonModel>(
-            ref reader,
-            options
-        )!;
+        return new StoredTableDataSetFromJsonModel(
+            JsonSerializer.Deserialize<StoredTableDataSetJsonModel>(ref reader, options)!
+        );
     }
 
     public override void Write(
