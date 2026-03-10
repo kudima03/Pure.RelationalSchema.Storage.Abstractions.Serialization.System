@@ -163,4 +163,77 @@ public sealed record RowConverterTests
             )
         );
     }
+
+    [Fact]
+    public void RoundTrip()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value2 = new RandomString(new Char('a'), new Char('z'));
+
+        IRow row = new Row(
+            new Collections.Generic.Dictionary<
+                KeyValuePair<IColumn, ICell>,
+                IColumn,
+                ICell
+            >(
+                [
+                    new KeyValuePair<IColumn, ICell>(
+                        new Column.Column(columnName1, new StringColumnType()),
+                        new Cell(value1)
+                    ),
+                    new KeyValuePair<IColumn, ICell>(
+                        new Column.Column(columnName2, new StringColumnType()),
+                        new Cell(value2)
+                    ),
+                ],
+                x => x.Key,
+                x => x.Value,
+                x => new ColumnHash(x)
+            )
+        );
+
+        IRow deserialized = JsonSerializer.Deserialize<IRow>(
+            JsonSerializer.Serialize(row, _options),
+            _options
+        )!;
+
+        Assert.True(new RowHash(row).SequenceEqual(new RowHash(deserialized)));
+    }
+
+    [Fact]
+    public void WriteEmptyRow()
+    {
+        IRow row = new Row(
+            new Collections.Generic.Dictionary<
+                KeyValuePair<IColumn, ICell>,
+                IColumn,
+                ICell
+            >([], x => x.Key, x => x.Value, x => new ColumnHash(x))
+        );
+
+        Assert.Equal("[]", JsonSerializer.Serialize(row, _options));
+    }
+
+    [Fact]
+    public void ReadEmptyRow()
+    {
+        IRow expected = new Row(
+            new Collections.Generic.Dictionary<
+                KeyValuePair<IColumn, ICell>,
+                IColumn,
+                ICell
+            >([], x => x.Key, x => x.Value, x => new ColumnHash(x))
+        );
+
+        Assert.True(
+            new RowHash(expected).SequenceEqual(
+                new RowHash(JsonSerializer.Deserialize<IRow>("[]", _options)!)
+            )
+        );
+    }
 }
