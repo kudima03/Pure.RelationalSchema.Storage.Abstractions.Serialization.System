@@ -15,16 +15,16 @@ internal sealed record StoredSchemaDatasetJsonModel
     [JsonConstructor]
     public StoredSchemaDatasetJsonModel(
         ISchema schema,
-        IEnumerable<IStoredTableDataSet> tables
+        IEnumerable<IStoredTableDataSet> datasets
     )
     {
         Schema = schema;
-        Tables = tables;
+        Datasets = datasets;
     }
 
     public ISchema Schema { get; }
 
-    public IEnumerable<IStoredTableDataSet> Tables { get; }
+    public IEnumerable<IStoredTableDataSet> Datasets { get; }
 }
 
 public sealed class StoredSchemaDataSetConverter : JsonConverter<IStoredSchemaDataSet>
@@ -44,7 +44,7 @@ public sealed class StoredSchemaDataSetConverter : JsonConverter<IStoredSchemaDa
         return new StoredSchemaDataset(
             jsonModel.Schema,
             new Dictionary<IStoredTableDataSet, ITable, IStoredTableDataSet>(
-                jsonModel.Tables,
+                jsonModel.Datasets,
                 x => x.TableSchema,
                 x => x,
                 x => new TableHash(x)
