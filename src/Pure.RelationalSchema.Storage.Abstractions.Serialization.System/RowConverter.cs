@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Pure.Collections.Generic;
@@ -7,30 +6,21 @@ using Pure.RelationalSchema.HashCodes;
 
 namespace Pure.RelationalSchema.Storage.Abstractions.Serialization.System;
 
-internal sealed record CellsJsonModel : IEnumerable<KeyValuePair<string, string>>
+internal sealed record ColumnAndCellJsonModel
 {
-    private readonly IEnumerable<KeyValuePair<string, string>> _cells;
-
-    public CellsJsonModel(IEnumerable<ICell> cells) : this(cells.Select(x=> new Key))
-    {
-
-    }
+    public ColumnAndCellJsonModel(KeyValuePair<IColumn, ICell> pair)
+        : this(pair.Key, pair.Value) { }
 
     [JsonConstructor]
-    public CellsJsonModel(IEnumerable<KeyValuePair<string, string>> cells)
+    public ColumnAndCellJsonModel(IColumn column, ICell cell)
     {
-        _cells = cells;
+        Column = column;
+        Cell = cell;
     }
 
-    public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-    {
-        return _cells.GetEnumerator();
-    }
+    public IColumn Column { get; }
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    public ICell Cell { get; }
 }
 
 public sealed class RowConverter : JsonConverter<IRow>
@@ -41,15 +31,15 @@ public sealed class RowConverter : JsonConverter<IRow>
         JsonSerializerOptions options
     )
     {
-        IEnumerable<KeyValuePair<IColumn, ICell>> pairs = JsonSerializer.Deserialize<
-            IEnumerable<KeyValuePair<IColumn, ICell>>
+        IEnumerable<ColumnAndCellJsonModel> models = JsonSerializer.Deserialize<
+            IEnumerable<ColumnAndCellJsonModel>
         >(ref reader, options)!;
 
         return new Row(
-            new Dictionary<KeyValuePair<IColumn, ICell>, IColumn, ICell>(
-                pairs,
-                x => x.Key,
-                x => x.Value,
+            new Dictionary<ColumnAndCellJsonModel, IColumn, ICell>(
+                models,
+                x => x.Column,
+                x => x.Cell,
                 x => new ColumnHash(x)
             )
         );
@@ -61,6 +51,10 @@ public sealed class RowConverter : JsonConverter<IRow>
         JsonSerializerOptions options
     )
     {
-        JsonSerializer.Serialize(writer, value.Cells.Select(x=> new KeyValuePair<string, string>(x.Key.)).AsEnumerable(), options);
+        JsonSerializer.Serialize(
+            writer,
+            value.Cells.Select(x => new ColumnAndCellJsonModel(x)),
+            options
+        );
     }
 }
