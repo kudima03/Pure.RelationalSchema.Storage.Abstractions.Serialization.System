@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Pure.Primitives.Abstractions.Serialization.System;
 using Pure.Primitives.Abstractions.String;
 using Pure.Primitives.Random.String;
 using Pure.RelationalSchema.Abstractions.Column;
+using Pure.RelationalSchema.Abstractions.Serialization.System;
 using Pure.RelationalSchema.ColumnType;
 using Pure.RelationalSchema.HashCodes;
 using Pure.RelationalSchema.Storage.HashCodes;
@@ -17,6 +19,17 @@ public sealed record RowConverterTests
     public RowConverterTests()
     {
         _options = new JsonSerializerOptions();
+
+        foreach (JsonConverter converter in new PrimitiveConverters())
+        {
+            _options.Converters.Add(converter);
+        }
+
+        foreach (JsonConverter converter in new RelationalSchemaConverters())
+        {
+            _options.Converters.Add(converter);
+        }
+
         foreach (JsonConverter converter in new RelationalSchemaStorageConverters())
         {
             _options.Converters.Add(converter);
@@ -29,20 +42,32 @@ public sealed record RowConverterTests
     [Fact]
     public void Write()
     {
-        IEnumerable<IString> strings =
-        [
-            .. Enumerable
-                .Range(0, 10)
-                .Select(_ => new RandomString(new Char('a'), new Char('z'))),
-        ];
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
 
-        IEnumerable<ICell> cells = strings.Select(x => new Cell(x));
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value2 = new RandomString(new Char('a'), new Char('z'));
 
         IRow row = new Row(
-            new Collections.Generic.Dictionary<ICell, IColumn, ICell>(
-                cells,
-                x => new Column.Column(new RandomString(), new StringColumnType()),
-                x => x,
+            new Collections.Generic.Dictionary<
+                KeyValuePair<IColumn, ICell>,
+                IColumn,
+                ICell
+            >(
+                [
+                    new KeyValuePair<IColumn, ICell>(
+                        new Column.Column(columnName1, new StringColumnType()),
+                        new Cell(value1)
+                    ),
+                    new KeyValuePair<IColumn, ICell>(
+                        new Column.Column(columnName2, new StringColumnType()),
+                        new Cell(value2)
+                    ),
+                ],
+                x => x.Key,
+                x => x.Value,
                 x => new ColumnHash(x)
             )
         );
@@ -51,9 +76,26 @@ public sealed record RowConverterTests
 
         Assert.Equal(
             $$"""
-            {
-              "Value": ""
-            }
+            [
+              {
+                "Column": {
+                  "Name": "{{columnName1.TextValue}}",
+                  "Type": "string"
+                },
+                "Cell": {
+                  "Value": "{{value1.TextValue}}"
+                }
+              },
+              {
+                "Column": {
+                  "Name": "{{columnName2.TextValue}}",
+                  "Type": "string"
+                },
+                "Cell": {
+                  "Value": "{{value2.TextValue}}"
+                }
+              }
+            ]
             """,
             serialized
         );
@@ -62,17 +104,62 @@ public sealed record RowConverterTests
     [Fact]
     public void Read()
     {
-        IString value = new RandomString(new Char('a'), new Char('z'));
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString value2 = new RandomString(new Char('a'), new Char('z'));
 
         string input = $$"""
-            {
-              "Value": "{{value.TextValue}}"
-            }
+            [
+              {
+                "Column": {
+                  "Name": "{{columnName1.TextValue}}",
+                  "Type": "string"
+                },
+                "Cell": {
+                  "Value": "{{value1.TextValue}}"
+                }
+              },
+              {
+                "Column": {
+                  "Name": "{{columnName2.TextValue}}",
+                  "Type": "string"
+                },
+                "Cell": {
+                  "Value": "{{value2.TextValue}}"
+                }
+              }
+            ]
             """;
 
         Assert.True(
-            new CellHash(new Cell(value)).SequenceEqual(
-                new CellHash(JsonSerializer.Deserialize<ICell>(input, _options)!)
+            new RowHash(
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(value1)
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(value2)
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                )
+            ).SequenceEqual(
+                new RowHash(JsonSerializer.Deserialize<IRow>(input, _options)!)
             )
         );
     }
