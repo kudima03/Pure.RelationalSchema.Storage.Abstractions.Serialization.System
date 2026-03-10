@@ -59,4 +59,19 @@ public sealed record CellConverterTests
             )
         );
     }
+
+    [Fact]
+    public void RoundTrip()
+    {
+        IString value = new RandomString(new Char('a'), new Char('z'));
+
+        ICell cell = new Cell(value);
+
+        ICell deserialized = JsonSerializer.Deserialize<ICell>(
+            JsonSerializer.Serialize(cell, _options),
+            _options
+        )!;
+
+        Assert.True(new CellHash(cell).SequenceEqual(new CellHash(deserialized)));
+    }
 }
