@@ -393,4 +393,180 @@ public sealed record StoredSchemaDataSetConverterTests
             )
         );
     }
+
+    [Fact]
+    public void RoundTrip()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IString schemaName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredSchemaDataSet schemaDataset = new StoredSchemaDataset(
+            new Schema.Schema(
+                schemaName,
+                [
+                    new Table.Table(
+                        tableName,
+                        [
+                            new Column.Column(columnName1, new StringColumnType()),
+                            new Column.Column(columnName2, new StringColumnType()),
+                        ],
+                        []
+                    ),
+                ],
+                []
+            ),
+            new Collections.Generic.Dictionary<
+                KeyValuePair<ITable, IStoredTableDataSet>,
+                ITable,
+                IStoredTableDataSet
+            >(
+                [
+                    new KeyValuePair<ITable, IStoredTableDataSet>(
+                        new Table.Table(
+                            tableName,
+                            [
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Column.Column(columnName2, new StringColumnType()),
+                            ],
+                            []
+                        ),
+                        new FakeStoredTableDataset(
+                            new Table.Table(
+                                tableName,
+                                [
+                                    new Column.Column(
+                                        columnName1,
+                                        new StringColumnType()
+                                    ),
+                                    new Column.Column(
+                                        columnName2,
+                                        new StringColumnType()
+                                    ),
+                                ],
+                                []
+                            ),
+                            [
+                                new Row(
+                                    new Collections.Generic.Dictionary<
+                                        KeyValuePair<IColumn, ICell>,
+                                        IColumn,
+                                        ICell
+                                    >(
+                                        [
+                                            new KeyValuePair<IColumn, ICell>(
+                                                new Column.Column(
+                                                    columnName1,
+                                                    new StringColumnType()
+                                                ),
+                                                new Cell(cellValue1)
+                                            ),
+                                            new KeyValuePair<IColumn, ICell>(
+                                                new Column.Column(
+                                                    columnName2,
+                                                    new StringColumnType()
+                                                ),
+                                                new Cell(cellValue2)
+                                            ),
+                                        ],
+                                        x => x.Key,
+                                        x => x.Value,
+                                        x => new ColumnHash(x)
+                                    )
+                                ),
+                            ]
+                        )
+                    ),
+                ],
+                x => x.Key,
+                x => x.Value,
+                x => new TableHash(x)
+            )
+        );
+
+        IStoredSchemaDataSet deserialized =
+            JsonSerializer.Deserialize<IStoredSchemaDataSet>(
+                JsonSerializer.Serialize(schemaDataset, _options),
+                _options
+            )!;
+
+        Assert.True(
+            new StoredSchemaDataSetHash(schemaDataset).SequenceEqual(
+                new StoredSchemaDataSetHash(deserialized)
+            )
+        );
+    }
+
+    [Fact]
+    public void WriteEmptyDatasets()
+    {
+        IString schemaName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredSchemaDataSet schemaDataset = new StoredSchemaDataset(
+            new Schema.Schema(schemaName, [], []),
+            new Collections.Generic.Dictionary<
+                KeyValuePair<ITable, IStoredTableDataSet>,
+                ITable,
+                IStoredTableDataSet
+            >([], x => x.Key, x => x.Value, x => new TableHash(x))
+        );
+
+        string serialized = JsonSerializer.Serialize(schemaDataset, _options);
+
+        Assert.Equal(
+            $$"""
+            {
+              "Schema": {
+                "Name": "{{schemaName.TextValue}}",
+                "Tables": [],
+                "ForeignKeys": []
+              },
+              "Datasets": []
+            }
+            """,
+            serialized
+        );
+    }
+
+    [Fact]
+    public void ReadEmptyDatasets()
+    {
+        IString schemaName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredSchemaDataSet expected = new StoredSchemaDataset(
+            new Schema.Schema(schemaName, [], []),
+            new Collections.Generic.Dictionary<
+                KeyValuePair<ITable, IStoredTableDataSet>,
+                ITable,
+                IStoredTableDataSet
+            >([], x => x.Key, x => x.Value, x => new TableHash(x))
+        );
+
+        string input = $$"""
+            {
+              "Schema": {
+                "Name": "{{schemaName.TextValue}}",
+                "Tables": [],
+                "ForeignKeys": []
+              },
+              "Datasets": []
+            }
+            """;
+
+        Assert.True(
+            new StoredSchemaDataSetHash(expected).SequenceEqual(
+                new StoredSchemaDataSetHash(
+                    JsonSerializer.Deserialize<IStoredSchemaDataSet>(input, _options)!
+                )
+            )
+        );
+    }
 }

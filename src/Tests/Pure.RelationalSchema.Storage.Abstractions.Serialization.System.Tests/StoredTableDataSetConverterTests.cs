@@ -230,4 +230,306 @@ public sealed record StoredTableDataSetConverterTests
             )
         );
     }
+
+    [Fact]
+    public void RoundTrip()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredTableDataSet dataset = new FakeStoredTableDataset(
+            new Table.Table(
+                tableName,
+                [
+                    new Column.Column(columnName1, new StringColumnType()),
+                    new Column.Column(columnName2, new StringColumnType()),
+                ],
+                []
+            ),
+            [
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(cellValue1)
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(cellValue2)
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                ),
+            ]
+        );
+
+        IStoredTableDataSet deserialized =
+            JsonSerializer.Deserialize<IStoredTableDataSet>(
+                JsonSerializer.Serialize(dataset, _options),
+                _options
+            )!;
+
+        Assert.True(
+            new StoredTableDataSetHash(dataset).SequenceEqual(
+                new StoredTableDataSetHash(deserialized)
+            )
+        );
+    }
+
+    [Fact]
+    public void WriteNoRows()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredTableDataSet dataset = new FakeStoredTableDataset(
+            new Table.Table(
+                tableName,
+                [new Column.Column(columnName1, new StringColumnType())],
+                []
+            ),
+            []
+        );
+
+        string serialized = JsonSerializer.Serialize(dataset, _options);
+
+        Assert.Equal(
+            $$"""
+            {
+              "TableSchema": {
+                "Name": "{{tableName.TextValue}}",
+                "Columns": [
+                  {
+                    "Name": "{{columnName1.TextValue}}",
+                    "Type": "string"
+                  }
+                ],
+                "Indexes": []
+              },
+              "Rows": []
+            }
+            """,
+            serialized
+        );
+    }
+
+    [Fact]
+    public void ReadNoRows()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredTableDataSet expected = new FakeStoredTableDataset(
+            new Table.Table(
+                tableName,
+                [new Column.Column(columnName1, new StringColumnType())],
+                []
+            ),
+            []
+        );
+
+        string input = $$"""
+            {
+              "TableSchema": {
+                "Name": "{{tableName.TextValue}}",
+                "Columns": [
+                  {
+                    "Name": "{{columnName1.TextValue}}",
+                    "Type": "string"
+                  }
+                ],
+                "Indexes": []
+              },
+              "Rows": []
+            }
+            """;
+
+        Assert.True(
+            new StoredTableDataSetHash(expected).SequenceEqual(
+                new StoredTableDataSetHash(
+                    JsonSerializer.Deserialize<IStoredTableDataSet>(input, _options)!
+                )
+            )
+        );
+    }
+
+    [Fact]
+    public async Task AsyncEnumerationYieldsAllRows()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString cellValue2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredTableDataSet dataset = new FakeStoredTableDataset(
+            new Table.Table(
+                tableName,
+                [
+                    new Column.Column(columnName1, new StringColumnType()),
+                    new Column.Column(columnName2, new StringColumnType()),
+                ],
+                []
+            ),
+            [
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(cellValue1)
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(cellValue2)
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                ),
+            ]
+        );
+
+        IStoredTableDataSet deserialized =
+            JsonSerializer.Deserialize<IStoredTableDataSet>(
+                JsonSerializer.Serialize(dataset, _options),
+                _options
+            )!;
+
+        List<IRow> rows = [];
+
+        await foreach (IRow row in deserialized)
+        {
+            rows.Add(row);
+        }
+
+        _ = Assert.Single(rows);
+
+        Assert.True(new RowHash(dataset.Single()).SequenceEqual(new RowHash(rows[0])));
+    }
+
+    [Fact]
+    public void RoundTripMultipleRows()
+    {
+        IString columnName1 = new RandomString(new Char('a'), new Char('z'));
+
+        IString columnName2 = new RandomString(new Char('a'), new Char('z'));
+
+        IString tableName = new RandomString(new Char('a'), new Char('z'));
+
+        IStoredTableDataSet dataset = new FakeStoredTableDataset(
+            new Table.Table(
+                tableName,
+                [
+                    new Column.Column(columnName1, new StringColumnType()),
+                    new Column.Column(columnName2, new StringColumnType()),
+                ],
+                []
+            ),
+            [
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                ),
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                ),
+                new Row(
+                    new Collections.Generic.Dictionary<
+                        KeyValuePair<IColumn, ICell>,
+                        IColumn,
+                        ICell
+                    >(
+                        [
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName1, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                            new KeyValuePair<IColumn, ICell>(
+                                new Column.Column(columnName2, new StringColumnType()),
+                                new Cell(new RandomString(new Char('a'), new Char('z')))
+                            ),
+                        ],
+                        x => x.Key,
+                        x => x.Value,
+                        x => new ColumnHash(x)
+                    )
+                ),
+            ]
+        );
+
+        IStoredTableDataSet deserialized =
+            JsonSerializer.Deserialize<IStoredTableDataSet>(
+                JsonSerializer.Serialize(dataset, _options),
+                _options
+            )!;
+
+        Assert.True(
+            new StoredTableDataSetHash(dataset).SequenceEqual(
+                new StoredTableDataSetHash(deserialized)
+            )
+        );
+    }
 }
