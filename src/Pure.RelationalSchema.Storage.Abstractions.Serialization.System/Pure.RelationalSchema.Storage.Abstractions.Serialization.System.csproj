@@ -17,6 +17,7 @@
     <PackageProjectUrl>https://github.com/kudima03/Pure.RelationalSchema.Storage.Abstractions.Serialization.System</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Pure.Primitives" Version="3.6.4" />
     <PackageReference Include="Pure.RelationalSchema.Storage" Version="0.1.0-preview.8.0.0" />
     <PackageReference
       Include="Pure.RelationalSchema.Storage.HashCodes"
