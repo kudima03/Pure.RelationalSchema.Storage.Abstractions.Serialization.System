@@ -15,6 +15,8 @@ dotnet format && csharpier format .           # auto-fix code style
 dotnet pack --configuration Release -p:Version=<version> --output .
 ```
 
+CI additionally passes `-p:AssemblyVersion` (pinned to the major) and `-p:FileVersion`; see `.github/workflows/publish-nuget.yml`.
+
 ## Architecture
 
 This is a **serialization library** — it provides `System.Text.Json` converters for the `Pure.RelationalSchema.Storage` domain interfaces. There are no abstractions or business logic defined here; the only purpose is to make `ICell`, `IRow`, `IStoredTableDataSet`, and `IStoredSchemaDataSet` round-trip cleanly through JSON.
