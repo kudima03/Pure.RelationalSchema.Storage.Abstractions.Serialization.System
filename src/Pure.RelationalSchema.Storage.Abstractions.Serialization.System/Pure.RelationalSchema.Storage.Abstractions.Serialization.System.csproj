@@ -14,6 +14,7 @@
     <AssemblyName>Pure.RelationalSchema.Storage.Abstractions.Serialization.System</AssemblyName>
     <Authors>Dmitry Kurochkin</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/kudima03/Pure.RelationalSchema.Storage.Abstractions.Serialization.System</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
@@ -24,5 +25,8 @@
       Version="0.1.0-preview.2.2.0"
     />
     <PackageReference Include="Pure.Collections.Generic" Version="0.1.0-preview.3.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
