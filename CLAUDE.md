@@ -33,7 +33,7 @@ Each converter uses an internal DTO record for JSON mapping; deserialized result
 
 **Multi-targeting:** net8.0, net9.0, net10.0, net11.0. `IsAotCompatible` is `false`.
 
-**Package validation:** `EnablePackageValidation = true` with `PackageValidationBaselineVersion = 0.1.0-preview.0.2.1`. Breaking API changes fail the build.
+**Package validation:** `EnablePackageValidation = true` with `PackageValidationBaselineVersion = 0.1.0-preview.1.2.0`. Breaking API changes fail the build.
 
 **Publishing:** triggered by pushing a semver tag (pattern `*.*.*`). The tag becomes the `PackageVersion`.
 
