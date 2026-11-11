@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.1.0-preview.1.2.0] — 2026-11-11
+
+### Added
+
+- Added `net11.0` as a target framework.
+
+### Changed
+
+- Updated dependencies to their .NET 11 releases: `Pure.Primitives` 3.8.0,
+  `Pure.RelationalSchema.Storage` 0.1.0-preview.8.1.0,
+  `Pure.RelationalSchema.Storage.HashCodes` 0.1.0-preview.2.3.0 and
+  `Pure.Collections.Generic` 0.1.0-preview.3.1.0.
+- Build and release tooling updates (CI and devcontainer moved to .NET 11).
+
 ## [0.1.0-preview.1.1.0] — 2026-10-22
 
 ### Changed
